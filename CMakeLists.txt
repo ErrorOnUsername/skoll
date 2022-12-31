@@ -5,6 +5,7 @@ set( CMAKE_EXPORT_COMPILE_COMMANDS 1 )
 set( CMAKE_CXX_STANDARD 20 )
 
 set( SRCS
+	compiler.cc
 	main.cc
 	lexer.cc
 	parser.cc

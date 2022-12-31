@@ -12,6 +12,12 @@ public:
 
 	char current();
 	char peek_char(size_t offset = 1);
+	bool at_eof();
+
+	Token tokenize_string_literal();
+	Token tokenize_char_literal();
+	Token tokenize_number();
+	Token tokenize_ident_or_keyword();
 
 private:
 	std::string m_file_data;

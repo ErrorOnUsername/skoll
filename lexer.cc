@@ -4,6 +4,8 @@
 #include <iostream>
 #include <vector>
 
+#include "assert.hh"
+
 #define ROOT_WITH_SDA_FORM(l, bare_kind, copy_kind, assign_kind) \
 	Token tk(TK_INVAL, m_idx, m_line); \
 	m_idx++; \
@@ -114,8 +116,8 @@ Token Lexer::next()
 			case '*': { ROOT_WITH_SD_FORM('=', TK_STAR, TK_STAR_ASSIGN); }
 			case '/': { ROOT_WITH_SD_FORM('=', TK_CARET, TK_STAR_ASSIGN); }
 
-			case '+': return tokenize_plus();
-			case '-': return tokenize_minus();
+			case '+': { ROOT_WITH_SDA_FORM('+', TK_PLUS, TK_PLUS_PLUS, TK_PLUS_ASSIGN); }
+			case '-': { ROOT_WITH_SDA_FORM('-', TK_MINUS, TK_MINUS_MINUS, TK_MINUS_ASSIGN); }
 
 			default: return tokenize_ident_or_keyword();
 		}
@@ -133,3 +135,61 @@ char Lexer::peek_char(size_t offset)
 	if(m_idx + offset >= m_file_data.size()) return 0;
 	return m_file_data[m_idx + offset];
 }
+
+bool Lexer::at_eof()
+{
+	return m_idx >= m_file_data.size();
+}
+
+Token Lexer::tokenize_string_literal()
+{
+	ASSERT(current() == '"', "[Line %lu] Expected \", got '%c'", m_line, current());
+
+	m_idx++;
+
+	Token tk(TK_STR_LIT, m_idx, m_line);
+	std::string str;
+
+	while(!at_eof() && !(current() == '"' || current() == '\n')) {
+		if(current() == '\\') {
+			if(peek_char() == 'x') {
+				Compiler::panic("Add support for hex literals in strings");
+			} else if(peek_char() == 'b') {
+				Compiler::panic("Add support for binary literals in strings");
+			} else if(peek_char() == 'n') {
+				m_idx += 2;
+				str.push_back('\n');
+			} else if(peek_char() == 'r') {
+				m_idx += 2;
+				str.push_back('\r');
+			} else if(peek_char() == 't') {
+				m_idx += 2;
+				str.push_back('\t');
+			} else if(peek_char() == 'v') {
+				m_idx += 2;
+				str.push_back('\v');
+			} else {
+				str.push_back(peek_char());
+				m_idx += 2;
+			}
+		} else {
+			str.push_back(current());
+		}
+	}
+
+	ASSERT(current() == '"', "[Line %lu] Unterminated string literal", m_line);
+	m_idx++;
+	tk.set_end_idx(m_idx);
+	tk.set_str(str);
+
+	return tk;
+}
+
+Token Lexer::tokenize_char_literal()
+{ }
+
+Token Lexer::tokenize_number()
+{ }
+
+Token Lexer::tokenize_ident_or_keyword()
+{ }
