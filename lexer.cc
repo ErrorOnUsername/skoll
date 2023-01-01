@@ -180,16 +180,64 @@ Token Lexer::tokenize_string_literal()
 	ASSERT(current() == '"', "[Line %lu] Unterminated string literal", m_line);
 	m_idx++;
 	tk.set_end_idx(m_idx);
-	tk.set_str(str);
+	tk.set_data_str(std::move(str));
 
 	return tk;
 }
 
 Token Lexer::tokenize_char_literal()
-{ }
+{
+	ASSERT(current() == '\'', "[Line %lu] Unterminated char literal", m_line);
+	m_idx++;
+
+	Token tk(TK_CHAR_LIT, m_idx, m_line);
+	std::string str;
+
+	if(!at_eof() && !(current() == '\n' || current() == '\'')) {
+		if(current() == '\\') {
+			if(peek_char() == 'x') {
+				Compiler::panic("Add support for hex literals in strings");
+			} else if(peek_char() == 'b') {
+				Compiler::panic("Add support for binary literals in strings");
+			} else if(peek_char() == 'n') {
+				m_idx += 2;
+				str.push_back('\n');
+			} else if(peek_char() == 'r') {
+				m_idx += 2;
+				str.push_back('\r');
+			} else if(peek_char() == 't') {
+				m_idx += 2;
+				str.push_back('\t');
+			} else if(peek_char() == 'v') {
+				m_idx += 2;
+				str.push_back('\v');
+			} else {
+				str.push_back(peek_char());
+				m_idx += 2;
+			}
+		} else {
+			str.push_back(current());
+			m_idx++;
+		}
+	}
+
+	ASSERT(current() == '\'', "[Line %lu] Unterminated char literal", m_line);
+	m_idx++;
+	tk.set_end_idx(m_idx);
+	tk.set_data_str(std::move(str));
+
+	return tk;
+}
+
+static bool is_digit(char c)
+{
+	return c >= '0' && c <= '9';
+}
 
 Token Lexer::tokenize_number()
-{ }
+{
+	ASSERT(is_digit(current()), "[Line %lu] Number literal must start with digit");
+}
 
 Token Lexer::tokenize_ident_or_keyword()
 { }

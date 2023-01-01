@@ -4,6 +4,8 @@ namespace std {
 	string to_string(Token tk)
 	{
 		switch(tk.kind()) {
+			case TK_INVAL:
+				return "TK_INVAL";
 			case TK_EOF:
 				return "TK_EOF";
 			case TK_EOL:
@@ -39,6 +41,8 @@ namespace std {
 				return "TK_ASSIGN";
 			case TK_COLON:
 				return "TK_COLON";
+			case TK_DOUBLE_COLON:
+				return "TK_DOUBLE_COLON";
 			case TK_COLON_ASSIGN:
 				return "TK_COLON_ASSIGN";
 			case TK_SEMICOLON:

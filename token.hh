@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <string>
 
 struct Span {
@@ -94,6 +95,41 @@ enum TokenKind {
 	TK_KW_AS,
 };
 
+enum NumberKind {
+	NK_NONE,
+	NK_FLOAT,
+	NK_UINT,
+	NK_INT,
+};
+
+struct ParsedNumber {
+	NumberKind kind;
+	union {
+		double   foating_point;
+		uint64_t uint;
+		int64_t  sint;
+	};
+};
+
+union TokenData {
+	std::string  str;
+	ParsedNumber number;
+
+	TokenData()
+		: str()
+	{ }
+
+	TokenData(TokenData const& o)
+	{
+		if(o.number.kind == NK_NONE)
+			str = o.str;
+		else
+			number = o.number;
+	}
+
+	~TokenData() {}
+};
+
 class Token {
 public:
 	Token(TokenKind kind, size_t start_idx, size_t start_line)
@@ -104,6 +140,7 @@ public:
 			.end_idx = 0,
 			.end_line = 0,
 		})
+		, m_data()
 	{ }
 
 	inline TokenKind kind() const { return m_kind; }
@@ -121,9 +158,35 @@ public:
 	inline size_t end_line() const { return m_span.end_line; }
 	inline void   set_end_line(size_t line) { m_span.end_line= line; }
 
+	inline void set_data_str(std::string&& str)
+	{
+		m_data.number.kind = NK_NONE;
+		m_data.str = std::move(str);
+	}
+
+	inline void set_data_float(double f)
+	{
+		m_data.number.kind = NK_FLOAT;
+		m_data.number.foating_point = f;
+	}
+
+	inline void set_data_uint(uint64_t u)
+	{
+		m_data.number.kind = NK_UINT;
+		m_data.number.uint = u;
+	}
+
+	inline void set_data_int(int64_t i)
+	{
+		m_data.number.kind = NK_INT;
+		m_data.number.uint = i;
+	}
+
 private:
 	TokenKind m_kind;
 	Span m_span;
+
+	TokenData m_data;
 };
 
 namespace std {
