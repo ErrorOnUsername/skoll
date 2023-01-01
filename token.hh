@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <string>
 
+#include "assert.hh"
+
 struct Span {
 	size_t start_idx;
 	size_t start_line;
@@ -93,6 +95,22 @@ enum TokenKind {
 	TK_KW_BREAK,
 	TK_KW_RETURN,
 	TK_KW_AS,
+
+	TK_TY_NOTHING,
+	TK_TY_RAWPTR,
+	TK_TY_BOOL,
+	TK_TY_CHAR,
+	TK_TY_U8,
+	TK_TY_I8,
+	TK_TY_U16,
+	TK_TY_I16,
+	TK_TY_U32,
+	TK_TY_I32,
+	TK_TY_U64,
+	TK_TY_I64,
+	TK_TY_F32,
+	TK_TY_F64,
+	TK_TY_STR,
 };
 
 enum NumberKind {
@@ -111,25 +129,6 @@ struct ParsedNumber {
 	};
 };
 
-union TokenData {
-	std::string  str;
-	ParsedNumber number;
-
-	TokenData()
-		: str()
-	{ }
-
-	TokenData(TokenData const& o)
-	{
-		if(o.number.kind == NK_NONE)
-			str = o.str;
-		else
-			number = o.number;
-	}
-
-	~TokenData() {}
-};
-
 class Token {
 public:
 	Token(TokenKind kind, size_t start_idx, size_t start_line)
@@ -140,8 +139,9 @@ public:
 			.end_idx = 0,
 			.end_line = 0,
 		})
-		, m_data()
 	{ }
+
+	char const* as_str();
 
 	inline TokenKind kind() const { return m_kind; }
 	inline void set_kind(TokenKind kind) { m_kind = kind; }
@@ -158,35 +158,43 @@ public:
 	inline size_t end_line() const { return m_span.end_line; }
 	inline void   set_end_line(size_t line) { m_span.end_line= line; }
 
-	inline void set_data_str(std::string&& str)
+	inline std::string const& str_data() const
 	{
-		m_data.number.kind = NK_NONE;
-		m_data.str = std::move(str);
+		ASSERT(m_number_kind == NK_NONE, "Data does not have string representation");
+		return m_str_data;
+	}
+
+	inline void set_str_data(std::string const& str)
+	{
+		m_number_kind = NK_NONE;
+		m_str_data    = str;
 	}
 
 	inline void set_data_float(double f)
 	{
-		m_data.number.kind = NK_FLOAT;
-		m_data.number.foating_point = f;
+		m_number_kind               = NK_FLOAT;
+		m_number_data.foating_point = f;
 	}
 
 	inline void set_data_uint(uint64_t u)
 	{
-		m_data.number.kind = NK_UINT;
-		m_data.number.uint = u;
+		m_number_kind      = NK_UINT;
+		m_number_data.uint = u;
 	}
 
 	inline void set_data_int(int64_t i)
 	{
-		m_data.number.kind = NK_INT;
-		m_data.number.uint = i;
+		m_number_kind      = NK_INT;
+		m_number_data.uint = i;
 	}
 
 private:
 	TokenKind m_kind;
 	Span m_span;
 
-	TokenData m_data;
+	std::string  m_str_data;
+	NumberKind   m_number_kind { NK_NONE };
+	ParsedNumber m_number_data;
 };
 
 namespace std {

@@ -13,7 +13,15 @@ int main()
 
 	std::cout << "tokens:" << std::endl;
 	Token tk = lexer.next();
+
 	while(tk.kind() != TK_EOF) {
-		std::cout << std::to_string(tk) << std::endl;
+		std::cout << tk.as_str() << " ";
+
+		if(tk.kind() == TK_IDENT) {
+			std::cout << tk.str_data();
+		}
+
+		std::cout << std::endl;
+		tk = lexer.next();
 	}
 }

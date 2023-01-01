@@ -1,36 +1,22 @@
-decl Vec2 : struct {
-	x: f32,
-	y: f32,
-	z: f32,
-}
-
-decl some_proc : (param: u16) -> f32
+decl sqrt : (number: f32) -> f32
 {
-	let ret: f32 = param as f32;
-	// Implicitly gets type usize
-	let other_thing := 20;
+	let x := number;
+	let y: f32 = 1.0;
+	let e: f32 = 0.000001;
 
-	let thing := 4 + 5 * 6;
+	while x - y > e {
+		x = (x + y) / 2;
+		y = number / x;
+	}
 
-	ret += 10.3e5;
-	ret *= other_thing - 12;
-
-	other_thing = 6;
-
-	ret /= other_thing;
-
-	return ret;
+	return x;
 }
-
-// TODO: Add constants
-// decl CT_RESULT: f32 = 10.0f;
 
 // Implicitly returns nothing (i.e. decl main : () -> nothing { })
 decl main : ()
 {
-	let param: u16 = 10;
-	let float_val := some_proc(param: param);
+	let value: f32 = 25.0;
+	let s_value := sqrt(value);
 
-	println(msg: "The value we got from 'some_proc' with param: %d is %f", va0: param, va1: float_val);
-	println(msg: "Using the same param at compile time, we got: %f", va0: CT_RESULT);
+	println("sqrt(%f) = %f", value, s_value);
 }
