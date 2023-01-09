@@ -1,2 +1,2 @@
-/.cache/
-/build/
+*.bin
+.DS_Store
