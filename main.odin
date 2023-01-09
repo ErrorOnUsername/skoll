@@ -36,12 +36,12 @@ main :: proc() {
 
 		// yay :) i can still math
 		translate := glm.mat4Translate(pos)
-		shift := glm.sin(yaw)
+		shift := glm.sin(2 * yaw)
 		max := glm.radians_f32(45.0)
 		rotate := glm.mat4Rotate(glm.normalize(glm.vec3 { -1, 0, -1 }), max * shift)
-		r2 := glm.mat4Rotate(glm.normalize(glm.vec3 { 0, 1, 0 }), yaw)
+		spin := glm.mat4Rotate(glm.normalize(glm.vec3 { 0, 1, 0 }), yaw)
 		scale := glm.mat4Scale(glm.vec3 { 1.0, 1.0, 1.0 })
-		transform := translate * rotate * r2 * scale
+		transform := translate * rotate * spin * scale
 		draw_mesh(&mesh, &cam, &transform)
 
 		yaw += 0.01
