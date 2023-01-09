@@ -6,39 +6,48 @@ import glm "core:math/linalg/glsl"
 import gl "vendor:OpenGL"
 import    "lib/assimp"
 
-MeshErr :: enum(u8) {
-	None,
-	ImportFail,
-	ShaderFailed,
+Model :: struct {
+	filepath: cstring,
+	meshes:   [dynamic]Mesh,
 }
 
-Mesh :: struct {
-	model_filepath: cstring,
-	vertex_array:   VertexArray,
-	shader:         Shader,
-}
+create_model :: proc(model_path: cstring) -> (model: Model, ok: bool) {
+	assimp_import_flags :=
+		cast(u32)assimp.PostProcessFlags.Triangulate      |
+		cast(u32)assimp.PostProcessFlags.GenSmoothNormals |
+		cast(u32)assimp.PostProcessFlags.FlipUVs
 
-create_mesh :: proc(model_path: cstring, vert_path: string, frag_path: string) -> (Mesh, MeshErr) {
-	verts := make([dynamic]f32)
-	idxs  := make([dynamic]u32)
-	defer delete(verts)
-	defer delete(idxs)
+	scene := assimp.ImportFile(model_path, assimp_import_flags)
+	defer assimp.ReleaseImport(scene)
 
-	{
-		assimp_import_flags := cast(u32)assimp.PostProcessFlags.Triangulate | cast(u32)assimp.PostProcessFlags.GenSmoothNormals | cast(u32)assimp.PostProcessFlags.FlipUVs
-		scene := assimp.ImportFile(model_path, assimp_import_flags)
-		defer assimp.ReleaseImport(scene)
-
-		if scene == nil {
-			fmt.eprintln("[Assimp Err]", assimp.GetErrorString())
-			return Mesh { }, MeshErr.ImportFail
-		}
-
-		transform := assimp.Mat4 { }
-		assimp.IdentityMatrix4(&transform)
-		traverse_assimp_scene(scene, scene.root_node, &transform, &verts, &idxs)
+	if scene == nil {
+		fmt.eprintln("[Assimp Err]", assimp.GetErrorString())
+		ok = false
+		return
 	}
 
+	meshes := make([dynamic]Mesh)
+
+	transform := assimp.Mat4 { }
+	assimp.IdentityMatrix4(&transform)
+	traverse_assimp_scene(scene, scene.root_node, &transform, &meshes)
+
+	model.filepath = model_path
+	model.meshes   = meshes
+	ok             = true
+	return
+}
+
+destroy_model :: proc(self: ^Model) {
+	for i := 0; i > len(self.meshes); i += 1 {
+		destroy_mesh(&self.meshes[i])
+	}
+}
+Mesh :: struct {
+	vertex_array: VertexArray,
+}
+
+create_mesh :: proc(verts: ^[dynamic]f32, idxs: ^[dynamic]u32) -> Mesh {
 	vbuff := create_vertex_buffer()
 	append(&vbuff.vertex_layout, VertexElement { "in_position", ShaderDataType.Float3, 0 })
 	append(&vbuff.vertex_layout, VertexElement { "in_normal", ShaderDataType.Float3, 0 })
@@ -50,69 +59,67 @@ create_mesh :: proc(model_path: cstring, vert_path: string, frag_path: string) -
 
 	varr := create_vertex_array(vbuff, ibuff)
 
-	shader, ok := create_shader(vert_path, frag_path)
-	if !ok {
-		fmt.println("Couldn't create shaders")
-		return Mesh { }, MeshErr.ShaderFailed
-	}
-
-	return Mesh { model_path, varr, shader }, MeshErr.None
+	return Mesh { varr }
 }
 
 destroy_mesh :: proc(self: ^Mesh) {
 	destroy_vertex_array(&self.vertex_array)
-	destroy_shader(&self.shader)
 }
 
 traverse_assimp_scene :: proc(
 	scene:            ^assimp.Scene,
 	node:             ^assimp.Node,
 	parent_transform: ^assimp.Mat4,
-	verts:            ^[dynamic]f32,
-	idxs:             ^[dynamic]u32,
+	meshes:           ^[dynamic]Mesh,
 ) {
 	transform := parent_transform^
 	assimp.MultiplyMatrix4(&transform, &node.transform)
 
 	for i: u32 = 0; i < node.num_meshes; i += 1 {
-		read_mesh_data(scene.meshes[node.meshes[i]], &transform, verts, idxs)
+		append(meshes, read_mesh_data(scene.meshes[node.meshes[i]], &transform))
 	}
 
 	for i: u32 = 0; i < node.num_children; i += 1 {
-		traverse_assimp_scene(scene, node.children[i], &transform, verts, idxs)
+		traverse_assimp_scene(scene, node.children[i], &transform, meshes)
 	}
 }
 
 read_mesh_data :: proc(
 	mesh:      ^assimp.Mesh,
 	transform: ^assimp.Mat4,
-	verts:     ^[dynamic]f32,
-	idxs:      ^[dynamic]u32,
-) {
-	last_vert_count: u32 = cast(u32)len(verts) / 6
+) -> Mesh {
+	verts := make([dynamic]f32)
+	idxs := make([dynamic]u32)
+
 	for i: u32 = 0; i < mesh.num_vertices; i += 1 {
 		v := mesh.vertices[i]
 		n := mesh.normals[i]
-		// This will most definite mess up with multi-mesh models.
-		// TODO: Fix this
-		uv := mesh.texture_coords[0][i]
 		assimp.TransformVecByMatrix4(&v, transform)
 		assimp.TransformVecByMatrix4(&n, transform)
 
-		append(verts, v.x)
-		append(verts, v.y)
-		append(verts, v.z)
-		append(verts, n.x)
-		append(verts, n.y)
-		append(verts, n.z)
-		append(verts, uv.x)
-		append(verts, uv.y)
+		append(&verts, v.x)
+		append(&verts, v.y)
+		append(&verts, v.z)
+		append(&verts, n.x)
+		append(&verts, n.y)
+		append(&verts, n.z)
+
+		if mesh.texture_coords[0] != nil {
+			uv := mesh.texture_coords[0][i]
+			append(&verts, uv.x)
+			append(&verts, uv.y)
+		} else {
+			append(&verts, 0.0)
+			append(&verts, 0.0)
+		}
 	}
 
 	for i: u32 = 0; i < mesh.num_faces; i += 1 {
 		face := mesh.faces[i]
 		for j: u32 = 0; j < face.num_indices; j += 1 {
-			append(idxs, last_vert_count + face.indices[j])
+			append(&idxs, face.indices[j])
 		}
 	}
+
+	return create_mesh(&verts, &idxs)
 }

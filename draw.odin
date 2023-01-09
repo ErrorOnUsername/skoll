@@ -12,19 +12,25 @@ bind :: proc {
 	bind_shader,
 }
 
-draw_mesh :: proc(mesh: ^Mesh, camera: ^Camera, transform: ^glm.mat4) {
+draw_model :: proc(
+	model:     ^Model,
+	shader:    ^Shader,
+	camera:    ^Camera,
+	transform: ^glm.mat4
+) {
 	camera_calculate_pv_matrix(camera)
 
 	norm_mat := glm.mat3(glm.transpose(glm.inverse(transform^)))
 
-	shader_set_mat4(&mesh.shader, "u_pv_matrix", &camera.pv_matrix)
-	shader_set_mat4(&mesh.shader, "u_transform_matrix", transform)
-	shader_set_mat3(&mesh.shader, "u_normal_matrix", &norm_mat)
-	shader_set_vec3(&mesh.shader, "u_camera_pos", &camera.position)
+	shader_set_mat4(shader, "u_pv_matrix", &camera.pv_matrix)
+	shader_set_mat4(shader, "u_transform_matrix", transform)
+	shader_set_mat3(shader, "u_normal_matrix", &norm_mat)
+	shader_set_vec3(shader, "u_camera_pos", &camera.position)
 
-	bind(&mesh.vertex_array)
-	bind(&mesh.vertex_array.index_buffer)
-
-	gl.DrawElements(gl.TRIANGLES, cast(i32)mesh.vertex_array.index_buffer.idx_count, gl.UNSIGNED_INT, nil)
+	for i := 0; i < len(model.meshes); i += 1 {
+		bind(&model.meshes[i].vertex_array)
+		bind(&model.meshes[i].vertex_array.index_buffer)
+		gl.DrawElements(gl.TRIANGLES, cast(i32)model.meshes[i].vertex_array.index_buffer.idx_count, gl.UNSIGNED_INT, nil)
+	}
 }
 
