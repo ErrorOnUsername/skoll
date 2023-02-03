@@ -6,7 +6,7 @@ import    "vendor:glfw"
 import gl "vendor:OpenGL"
 
 GL_MAJOR_VERSION :: 4
-GL_MINOR_VERSION :: 0
+GL_MINOR_VERSION :: 6
 
 g_current_window: ^Window = nil
 
@@ -31,11 +31,6 @@ create_window :: proc(width: i32, height: i32, title: cstring) -> (Window, Windo
 		fmt.eprintf("[%d] %s", code, msg);
 		return Window { }, WindowErr.GLFWInitFailed
 	}
-
-	glfw.WindowHint(glfw.CONTEXT_VERSION_MAJOR, GL_MAJOR_VERSION)
-	glfw.WindowHint(glfw.CONTEXT_VERSION_MINOR, GL_MINOR_VERSION)
-	glfw.WindowHint(glfw.OPENGL_FORWARD_COMPAT, 1)
-	glfw.WindowHint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
 
 	h_wind := glfw.CreateWindow(width, height, title, nil, nil)
 	if h_wind == nil {
@@ -79,7 +74,7 @@ window_init_event_callbacks :: proc(self: ^Window) {
 }
 
 window_clear :: proc() {
-	gl.ClearColor(0.18, 0.18, 0.68, 1.0)
+	gl.ClearColor(0.18, 0.18, 0.18, 1.0)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }
 

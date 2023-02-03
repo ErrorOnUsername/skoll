@@ -1,8 +1,13 @@
 package assimp
 
 import c "core:c/libc"
+import   "core:os"
 
-foreign import assimp "system:assimp"
+when os.OS == .Windows {
+	foreign import assimp "./assimp-vc143-mt.lib"
+} else {
+	foreign import assimp "system:assimp"
+}
 
 @(default_calling_convention="c", link_prefix="ai")
 foreign assimp {
@@ -12,6 +17,23 @@ foreign assimp {
 	IdentityMatrix4       :: proc(dest: ^Mat4) ---
 	MultiplyMatrix4       :: proc(dest: ^Mat4, src: ^Mat4) ---
 	TransformVecByMatrix4 :: proc(vec: ^Vector3D, mat: ^Mat4) ---
+
+	GetMaterialFloatArray :: proc(
+		material: ^Material,
+		key:       cstring,
+		type:      TextureType,
+		index:     c.uint,
+		out:      ^f32,
+		max:      ^c.uint,
+	) ---
+
+	GetMaterialColor :: proc(
+		material: ^Material,
+		key:       cstring,
+		type:      TextureType,
+		index:     c.uint,
+		out:      ^Color4D,
+	) ---
 }
 
 PostProcessFlags :: enum(c.uint) {
@@ -270,6 +292,22 @@ PropertyTypeInfo :: enum(c.uint) {
 	Integer = 0x4,
 	Buffer  = 0x5,
 }
+
+MATKEY_SHININESS_KEY :: "$mat.shininess"
+MATKEY_SHININESS_TY  :: TextureType.None
+MATKEY_SHININESS_IDX :: 0
+
+MATKEY_ROUGHNESS_FACTOR_KEY :: "$mat.roughnessFactor"
+MATKEY_ROUGHNESS_FACTOR_TY  :: TextureType.None
+MATKEY_ROUGHNESS_FACTOR_IDX :: 0
+
+MATKEY_COLOR_DIFFUSE_KEY :: "$clr.diffuse"
+MATKEY_COLOR_DIFFUSE_TY  :: TextureType.None
+MATKEY_COLOR_DIFFUSE_IDX :: 0
+
+MATKEY_COLOR_BASE_KEY :: "$clr.base"
+MATKEY_COLOR_BASE_TY  :: TextureType.None
+MATKEY_COLOR_BASE_IDX :: 0
 
 MaterialProperty :: struct {
 	key:            String,

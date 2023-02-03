@@ -43,12 +43,13 @@ destroy_model :: proc(self: ^Model) {
 		destroy_mesh(&self.meshes[i])
 	}
 }
+
 Mesh :: struct {
 	vertex_array: VertexArray,
-	//material: Material,
+	material: Material,
 }
 
-create_mesh :: proc(verts: ^[dynamic]f32, idxs: ^[dynamic]u32) -> Mesh {
+create_mesh :: proc(material: Material, verts: ^[dynamic]f32, idxs: ^[dynamic]u32) -> Mesh {
 	vbuff := create_vertex_buffer()
 	append(&vbuff.vertex_layout, VertexElement { "in_position", ShaderDataType.Float3, 0 })
 	append(&vbuff.vertex_layout, VertexElement { "in_normal", ShaderDataType.Float3, 0 })
@@ -60,11 +61,12 @@ create_mesh :: proc(verts: ^[dynamic]f32, idxs: ^[dynamic]u32) -> Mesh {
 
 	varr := create_vertex_array(vbuff, ibuff)
 
-	return Mesh { varr }
+	return Mesh { varr, material }
 }
 
 destroy_mesh :: proc(self: ^Mesh) {
 	destroy_vertex_array(&self.vertex_array)
+	destroy_shader(&self.material.shader)
 }
 
 traverse_assimp_scene :: proc(
@@ -77,7 +79,7 @@ traverse_assimp_scene :: proc(
 	assimp.MultiplyMatrix4(&transform, &node.transform)
 
 	for i: u32 = 0; i < node.num_meshes; i += 1 {
-		append(meshes, read_mesh_data(scene.meshes[node.meshes[i]], &transform))
+		append(meshes, read_mesh_data(scene, scene.meshes[node.meshes[i]], &transform))
 	}
 
 	for i: u32 = 0; i < node.num_children; i += 1 {
@@ -86,6 +88,7 @@ traverse_assimp_scene :: proc(
 }
 
 read_mesh_data :: proc(
+	scene:     ^assimp.Scene,
 	mesh:      ^assimp.Mesh,
 	transform: ^assimp.Mat4,
 ) -> Mesh {
@@ -122,5 +125,53 @@ read_mesh_data :: proc(
 		}
 	}
 
-	return create_mesh(&verts, &idxs)
+	mat := read_material_data(scene.materials[mesh.material_index])
+
+	return create_mesh(mat, &verts, &idxs)
+}
+
+read_material_data :: proc(assimp_material: ^assimp.Material) -> Material
+{
+	shininess: f32 = 1.0
+	assimp.GetMaterialFloatArray(
+		assimp_material,
+		assimp.MATKEY_SHININESS_KEY,
+		assimp.MATKEY_SHININESS_TY,
+		assimp.MATKEY_SHININESS_IDX,
+		&shininess,
+		nil,
+	)
+
+	roughness: f32 = 1.0
+	assimp.GetMaterialFloatArray(
+		assimp_material,
+		assimp.MATKEY_ROUGHNESS_FACTOR_KEY,
+		assimp.MATKEY_ROUGHNESS_FACTOR_TY,
+		assimp.MATKEY_ROUGHNESS_FACTOR_IDX,
+		&roughness,
+		nil,
+	)
+
+	color: assimp.Color4D;
+	assimp.GetMaterialColor(
+		assimp_material,
+		assimp.MATKEY_COLOR_BASE_KEY,
+		assimp.MATKEY_COLOR_BASE_TY,
+		assimp.MATKEY_COLOR_BASE_IDX,
+		&color,
+	)
+
+	material := Material { }
+
+	material.diffuse   = { color.r, color.g, color.b }
+	material.ambient   = { color.r, color.g, color.b }
+	material.specular  = { roughness, roughness, roughness }
+	material.shininess = shininess
+
+	shader, ok := create_shader("shaders/test.v", "shaders/test.f")
+	assert(ok)
+
+	material.shader = shader
+
+	return material
 }
