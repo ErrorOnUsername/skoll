@@ -72,3 +72,16 @@ shader_set_vec3 :: proc(self: ^Shader, name: cstring, val: ^glm.vec3) -> bool {
 	gl.Uniform3f(loc, val.x, val.y, val.z)
 	return true
 }
+
+shader_set_f32 :: proc(self: ^Shader, name: cstring, val: f32) -> bool {
+	bind(self)
+
+	loc := gl.GetUniformLocation(self.id, name)
+	if loc < 0 {
+		fmt.eprintln("Could not find uniform:", name, "in shader:", self.name)
+		return false
+	}
+
+	gl.Uniform1f(loc, val)
+	return true
+}

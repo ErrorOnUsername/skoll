@@ -45,6 +45,7 @@ destroy_model :: proc(self: ^Model) {
 }
 Mesh :: struct {
 	vertex_array: VertexArray,
+	//material: Material,
 }
 
 create_mesh :: proc(verts: ^[dynamic]f32, idxs: ^[dynamic]u32) -> Mesh {

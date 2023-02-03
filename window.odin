@@ -73,6 +73,11 @@ destroy_window :: proc(window: ^Window) {
 	glfw.DestroyWindow(window.handle)
 }
 
+window_init_event_callbacks :: proc(self: ^Window) {
+	glfw.SetWindowSizeCallback(self.handle, cast(glfw.WindowSizeProc)window_size_cb)
+	glfw.SetKeyCallback(self.handle, cast(glfw.KeyProc)window_key_cb)
+}
+
 window_clear :: proc() {
 	gl.ClearColor(0.18, 0.18, 0.68, 1.0)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
@@ -85,4 +90,63 @@ window_update :: proc(self: ^Window) {
 
 window_should_close :: proc(self: ^Window) -> b32 {
 	return glfw.WindowShouldClose(self.handle)
+}
+
+
+//
+// Event Callbacks
+//
+
+WindowResizeEvent :: struct {
+	width: int,
+	height: int,
+}
+
+KeyboardEvent :: struct {
+	pressed: bool,
+	repeated: bool,
+	key: Key,
+}
+
+EventData :: union {
+	WindowResizeEvent,
+	KeyboardEvent,
+}
+
+Event :: struct {
+	handled: bool,
+	data: EventData,
+}
+
+window_on_event :: proc(e: ^Event) {
+	//fmt.printf("event: %s\n", e^);
+}
+
+window_size_cb :: proc(handle: glfw.WindowHandle, width: int, height: int) {
+	data: EventData = WindowResizeEvent {
+		width,
+		height,
+	}
+	e := Event { false, data }
+	window_on_event(&e)
+}
+
+window_key_cb :: proc(handle: glfw.WindowHandle, key: int, scancode: int, action: int, mods: int) {
+	kb_e := KeyboardEvent { }
+	kb_e.key = Key(key)
+
+	switch action {
+		case glfw.PRESS:
+			kb_e.pressed = true
+			kb_e.repeated = false
+		case glfw.RELEASE:
+			kb_e.pressed = false
+			kb_e.repeated = false
+		case glfw.REPEAT:
+			kb_e.pressed = true
+			kb_e.repeated = true
+	}
+
+	e := Event { false, kb_e }
+	window_on_event(&e)
 }
