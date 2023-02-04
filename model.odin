@@ -130,8 +130,13 @@ read_mesh_data :: proc(
 	return create_mesh(mat, &verts, &idxs)
 }
 
-read_material_data :: proc(assimp_material: ^assimp.Material) -> Material
-{
+read_material_data :: proc(assimp_material: ^assimp.Material) -> Material {
+	fmt.println("Mat Props:")
+	for i: u32 = 0; i < assimp_material.num_properties; i += 1 {
+		prop := assimp_material.properties[i]
+		fmt.println("\t", cast(cstring)cast(rawptr)&prop.key.data[0], "[", prop.type, "]")
+	}
+
 	shininess: f32 = 1.0
 	assimp.GetMaterialFloatArray(
 		assimp_material,

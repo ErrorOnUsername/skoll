@@ -4,7 +4,7 @@ import c "core:c/libc"
 import   "core:os"
 
 when os.OS == .Windows {
-	foreign import assimp "./assimp-vc143-mt.lib"
+	foreign import assimp "./assimp.lib"
 } else {
 	foreign import assimp "system:assimp"
 }
