@@ -15,7 +15,7 @@ bind :: proc {
 draw_model :: proc(
 	model:     ^Model,
 	camera:    ^Camera,
-	transform: ^glm.mat4
+	transform: ^glm.mat4,
 ) {
 	camera_calculate_pv_matrix(camera)
 
