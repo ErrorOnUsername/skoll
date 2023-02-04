@@ -17,18 +17,18 @@ TextureLoadError :: enum {
 }
 
 Texture :: struct {
-	id: u32,
-	path: cstring,
-	width: u32,
-	height: u32,
+	id:              u32,
+	path:            cstring,
+	width:           u32,
+	height:          u32,
 	internal_format: u32,
-	data_format: u32,
+	data_format:     u32,
 }
 
 create_texture :: proc(path: cstring) -> (tex: Texture, err: TextureLoadError) {
-	real_width: i32
+	real_width:  i32
 	real_height: i32
-	channels: i32
+	channels:    i32
 
 	stbi.set_flip_vertically_on_load(1)
 	data := stbi.load(path, &real_width, &real_height, &channels, 0)
@@ -40,7 +40,7 @@ create_texture :: proc(path: cstring) -> (tex: Texture, err: TextureLoadError) {
 	}
 
 	internal_format: u32
-	data_format: u32
+	data_format:     u32
 
 	if channels == 4 {
 		internal_format = gl.RGBA8
