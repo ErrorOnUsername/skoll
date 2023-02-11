@@ -39,7 +39,6 @@ shader_set_mat4 :: proc(self: ^Shader, name: cstring, val: ^glm.mat4) -> bool {
 
 	loc := gl.GetUniformLocation(self.id, name)
 	if loc < 0 {
-		fmt.eprintln("Could not find uniform:", name, "in shader:", self.name)
 		return false
 	}
 
@@ -52,7 +51,6 @@ shader_set_mat3 :: proc(self: ^Shader, name: cstring, val: ^glm.mat3) -> bool {
 
 	loc := gl.GetUniformLocation(self.id, name)
 	if loc < 0 {
-		fmt.eprintln("Could not find uniform:", name, "in shader:", self.name)
 		return false
 	}
 
@@ -65,7 +63,6 @@ shader_set_vec3 :: proc(self: ^Shader, name: cstring, val: ^glm.vec3) -> bool {
 
 	loc := gl.GetUniformLocation(self.id, name)
 	if loc < 0 {
-		fmt.eprintln("Could not find uniform:", name, "in shader:", self.name)
 		return false
 	}
 
@@ -78,7 +75,7 @@ shader_set_f32 :: proc(self: ^Shader, name: cstring, val: f32) -> bool {
 
 	loc := gl.GetUniformLocation(self.id, name)
 	if loc < 0 {
-		fmt.eprintln("Could not find uniform:", name, "in shader:", self.name)
+		//fmt.eprintln("Could not find uniform:", name, "in shader:", self.name)
 		return false
 	}
 

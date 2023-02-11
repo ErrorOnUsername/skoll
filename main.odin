@@ -41,11 +41,11 @@ main :: proc() {
 		rotate    := glm.mat4Rotate(glm.normalize(glm.vec3 { -1, 0, -1 }), max * shift)
 		spin      := glm.mat4Rotate(glm.normalize(glm.vec3 { 0, 1, 0 }), yaw)
 		scale     := glm.mat4Scale(glm.vec3 { 1.0, 1.0, 1.0 })
-		transform := translate * rotate * spin * scale
+		transform := translate * /*rotate **/ spin * scale
 
 		draw_model(&model, &cam, &transform)
 
-		yaw += 0.01
+		yaw += 0.005
 
 		window_update(&window)
 	}

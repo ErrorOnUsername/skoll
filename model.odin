@@ -2,6 +2,7 @@ package main
 
 import     "core:fmt"
 import glm "core:math/linalg/glsl"
+import     "core:strconv"
 
 import gl "vendor:OpenGL"
 import    "lib/assimp"
@@ -13,8 +14,8 @@ Model :: struct {
 
 create_model :: proc(model_path: cstring) -> (model: Model, ok: bool) {
 	assimp_import_flags :=
-		cast(u32)assimp.PostProcessFlags.Triangulate      |
-		cast(u32)assimp.PostProcessFlags.GenSmoothNormals |
+		cast(u32)assimp.PostProcessFlags.Triangulate        |
+		cast(u32)assimp.PostProcessFlags.GenSmoothNormals   |
 		cast(u32)assimp.PostProcessFlags.FlipUVs
 
 	scene := assimp.ImportFile(model_path, assimp_import_flags)
@@ -125,18 +126,12 @@ read_mesh_data :: proc(
 		}
 	}
 
-	mat := read_material_data(scene.materials[mesh.material_index])
+	mat := read_material_data(scene, scene.materials[mesh.material_index])
 
 	return create_mesh(mat, &verts, &idxs)
 }
 
-read_material_data :: proc(assimp_material: ^assimp.Material) -> Material {
-	fmt.println("Mat Props:")
-	for i: u32 = 0; i < assimp_material.num_properties; i += 1 {
-		prop := assimp_material.properties[i]
-		fmt.println("\t", cast(cstring)cast(rawptr)&prop.key.data[0], "[", prop.type, "]")
-	}
-
+read_material_data :: proc(scene: ^assimp.Scene, assimp_material: ^assimp.Material) -> Material {
 	shininess: f32 = 1.0
 	assimp.GetMaterialFloatArray(
 		assimp_material,
@@ -157,7 +152,7 @@ read_material_data :: proc(assimp_material: ^assimp.Material) -> Material {
 		nil,
 	)
 
-	color: assimp.Color4D;
+	color: assimp.Color4D
 	assimp.GetMaterialColor(
 		assimp_material,
 		assimp.MATKEY_COLOR_BASE_KEY,
@@ -167,10 +162,10 @@ read_material_data :: proc(assimp_material: ^assimp.Material) -> Material {
 	)
 
 	material := Material { }
+	load_textures_from_material(&material.diffuse, scene, assimp_material, assimp.TextureType.Diffuse)
 
-	material.diffuse   = { color.r, color.g, color.b }
-	material.ambient   = { color.r, color.g, color.b }
-	material.specular  = { roughness, roughness, roughness }
+	material.ambient   = { }
+	material.specular  = { }
 	material.shininess = shininess
 
 	shader, ok := create_shader("shaders/test.v", "shaders/test.f")
@@ -179,4 +174,36 @@ read_material_data :: proc(assimp_material: ^assimp.Material) -> Material {
 	material.shader = shader
 
 	return material
+}
+
+load_textures_from_material :: proc(textures: ^[MAX_TEXTURES_PER_CHANNEL]Texture, scene: ^assimp.Scene, material: ^assimp.Material, type: assimp.TextureType) {
+	for i: u32 = 0; i < assimp.GetMaterialTextureCount(material, type); i += 1 {
+		assert(i < 3, "Can't allocate more than 3 texture per channel")
+
+		path: assimp.String
+		assimp.GetMaterialTexture(
+			material,
+			type,
+			i,
+			&path,
+		)
+
+		if rune(path.data[0]) == '*' {
+			idx, parse_ok := strconv.parse_i64_of_base(string(cast(cstring)&path.data[1]), 10)
+			assert(parse_ok)
+
+			tex := scene.textures[idx]
+
+			assert(tex.height == 0)
+			texture, texture_load_err := create_texture_from_raw_data(cast([^]u8)tex.data, cast(i32)tex.width, TextureFormat.RGBA)
+			assert(texture_load_err == .None)
+
+			textures[i] = texture
+		} else {
+			texture, texture_load_err := create_texture_from_path(cast(cstring)&path.data[0])
+			assert(texture_load_err == .None)
+
+			textures[i] = texture
+		}
+	}
 }

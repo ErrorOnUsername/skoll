@@ -2,7 +2,7 @@
 
 struct Material {
     vec3  ambient;
-    vec3  diffuse;
+    sampler2D diffuse_maps;
     vec3  specular;
     float shininess;
 };
@@ -21,7 +21,6 @@ out vec4 out_color;
 void main() {
     vec3 light_pos = vec3(1.0, 2.0, 0.0);
     vec3 light_color = vec3(1.0, 1.0, 1.0);
-    vec3 obj_color = vec3(1.0);
 
     vec3 norm = normalize(fs_in.normal);
     vec3 light_dir = normalize(light_pos - fs_in.frag_pos);
@@ -29,12 +28,12 @@ void main() {
     vec3 reflect_dir = reflect(-light_dir, norm);
 
     float diff = max(dot(norm, light_dir), 0.0);
-    vec3 diffuse = (diff * u_material.diffuse) * light_color;
-    float spec = pow(max(dot(cam_dir, reflect_dir), 0.0), u_material.shininess);
+    vec3 diffuse = (diff * texture(u_material.diffuse_maps, fs_in.uv).rgb) * light_color;
+    float spec = pow(max(dot(cam_dir, reflect_dir), 0.001), u_material.shininess);
     vec3 specular = (u_material.specular * spec) * light_color;
 
     vec3 ambient = light_color * u_material.ambient;
     vec3 result = ambient + diffuse + specular;
 
-    out_color = vec4(result, 1.0);
+    out_color = vec4(fs_in.normal, 1.0);
 }

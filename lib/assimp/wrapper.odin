@@ -34,6 +34,21 @@ foreign assimp {
 		index:     c.uint,
 		out:      ^Color4D,
 	) ---
+
+	GetMaterialTextureCount :: proc(material: ^Material, type: TextureType) -> c.uint ---
+
+	GetMaterialTexture :: proc(
+		material: ^Material,
+		type: TextureType,
+		index: c.uint,
+		path: ^String,
+		mapping: ^TextureMapping = nil,
+		uv_index: ^c.uint = nil,
+		blend: ^f32 = nil,
+		op: ^TextureOp = nil,
+		mapmode: ^TextureMapMode = nil,
+		flags: ^c.uint = nil,
+	) ---
 }
 
 PostProcessFlags :: enum(c.uint) {

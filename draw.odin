@@ -31,8 +31,9 @@ draw_model :: proc(
 		shader_set_mat3(shader, "u_normal_matrix", &norm_mat)
 		shader_set_vec3(shader, "u_camera_pos", &camera.position)
 
+		bind_texture(&material.diffuse[0], 0)
+
 		shader_set_vec3(shader, "u_material.ambient", &material.ambient)
-		shader_set_vec3(shader, "u_material.diffuse", &material.diffuse)
 		shader_set_vec3(shader, "u_material.specular", &material.specular)
 		shader_set_f32(shader, "u_material.shininess", material.shininess)
 
