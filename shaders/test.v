@@ -6,7 +6,7 @@ layout(location = 2) in vec2 in_uv;
 
 uniform mat4 u_pv_matrix;
 uniform mat4 u_transform_matrix;
-uniform mat3 u_normal_matrix;
+uniform mat4 u_normal_matrix;
 
 out VS_OUT {
 	vec3 frag_pos;
@@ -16,7 +16,7 @@ out VS_OUT {
 
 void main() {
 	vs_out.frag_pos = vec3(u_transform_matrix * vec4(in_position, 1.0));
-	vs_out.normal = u_normal_matrix * in_normal;
+	vs_out.normal = mat3(u_normal_matrix) * in_normal;
 	vs_out.uv = in_uv;
 
 	gl_Position = u_pv_matrix * u_transform_matrix * vec4(in_position, 1.0);

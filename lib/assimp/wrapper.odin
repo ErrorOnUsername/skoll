@@ -11,12 +11,14 @@ when os.OS == .Windows {
 
 @(default_calling_convention="c", link_prefix="ai")
 foreign assimp {
-	ImportFile            :: proc(path: cstring, flags: c.uint) -> ^Scene ---
-	ReleaseImport         :: proc(scene: ^Scene) ---
-	GetErrorString        :: proc() -> cstring ---
-	IdentityMatrix4       :: proc(dest: ^Mat4) ---
-	MultiplyMatrix4       :: proc(dest: ^Mat4, src: ^Mat4) ---
-	TransformVecByMatrix4 :: proc(vec: ^Vector3D, mat: ^Mat4) ---
+	ImportFile                 :: proc(path: cstring, flags: c.uint) -> ^Scene ---
+	ReleaseImport              :: proc(scene: ^Scene) ---
+	GetErrorString             :: proc() -> cstring ---
+	IdentityMatrix4            :: proc(dest: ^Mat4) ---
+	MultiplyMatrix4            :: proc(dest: ^Mat4, src: ^Mat4) ---
+	TransformVecByMatrix4      :: proc(vec: ^Vector3D, mat: ^Mat4) ---
+	TransformVecByMatrix3      :: proc(vec: ^Vector3D, mat: ^Mat3) ---
+	Matrix3FromMatrix4         :: proc(dest: ^Mat3, src: ^Mat4) ---
 
 	GetMaterialFloatArray :: proc(
 		material: ^Material,
@@ -496,6 +498,12 @@ Vector3D :: struct {
 
 Quat :: struct {
 	w, x, y, z: c.float,
+}
+
+Mat3 :: struct {
+	a1, a2, a3: c.float,
+	b1, b2, b3: c.float,
+	c1, c2, c3: c.float,
 }
 
 Mat4 :: struct {

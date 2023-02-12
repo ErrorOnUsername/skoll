@@ -19,7 +19,7 @@ draw_model :: proc(
 ) {
 	camera_calculate_pv_matrix(camera)
 
-	norm_mat := glm.mat3(glm.transpose(glm.inverse(transform^)))
+	norm_mat := glm.mat4(glm.transpose(glm.inverse(transform^)))
 
 	for i := 0; i < len(model.meshes); i += 1 {
 		mesh := &model.meshes[i]
@@ -28,10 +28,10 @@ draw_model :: proc(
 
 		shader_set_mat4(shader, "u_pv_matrix", &camera.pv_matrix)
 		shader_set_mat4(shader, "u_transform_matrix", transform)
-		shader_set_mat3(shader, "u_normal_matrix", &norm_mat)
+		shader_set_mat4(shader, "u_normal_matrix", &norm_mat)
 		shader_set_vec3(shader, "u_camera_pos", &camera.position)
 
-		bind_texture(&material.diffuse[0], 0)
+		bind_texture(&model.textures[material.diffuse[0]], 0)
 
 		shader_set_vec3(shader, "u_material.ambient", &material.ambient)
 		shader_set_vec3(shader, "u_material.specular", &material.specular)

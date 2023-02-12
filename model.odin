@@ -10,12 +10,14 @@ import    "lib/assimp"
 Model :: struct {
 	filepath: cstring,
 	meshes:   [dynamic]Mesh,
+	textures: [dynamic]Texture,
 }
 
 create_model :: proc(model_path: cstring) -> (model: Model, ok: bool) {
 	assimp_import_flags :=
 		cast(u32)assimp.PostProcessFlags.Triangulate        |
 		cast(u32)assimp.PostProcessFlags.GenSmoothNormals   |
+		cast(u32)assimp.PostProcessFlags.FixInfacingNormals |
 		cast(u32)assimp.PostProcessFlags.FlipUVs
 
 	scene := assimp.ImportFile(model_path, assimp_import_flags)
@@ -25,6 +27,16 @@ create_model :: proc(model_path: cstring) -> (model: Model, ok: bool) {
 		fmt.eprintln("[Assimp Err]", assimp.GetErrorString())
 		ok = false
 		return
+	}
+
+	for i: u32 = 0; i < scene.num_textures; i += 1 {
+		tex := scene.textures[i]
+
+		assert(tex.height == 0)
+		texture, texture_load_err := create_texture_from_raw_data(cast([^]u8)tex.data, cast(i32)tex.width, TextureFormat.RGBA)
+		assert(texture_load_err == .None)
+
+		append(&model.textures, texture)
 	}
 
 	meshes := make([dynamic]Mesh)
@@ -100,7 +112,10 @@ read_mesh_data :: proc(
 		v := mesh.vertices[i]
 		n := mesh.normals[i]
 		assimp.TransformVecByMatrix4(&v, transform)
-		assimp.TransformVecByMatrix4(&n, transform)
+
+		rot:  assimp.Mat3
+		assimp.Matrix3FromMatrix4(&rot, transform)
+		assimp.TransformVecByMatrix3(&n, &rot)
 
 		append(&verts, v.x)
 		append(&verts, v.y)
@@ -131,7 +146,7 @@ read_mesh_data :: proc(
 	return create_mesh(mat, &verts, &idxs)
 }
 
-read_material_data :: proc(scene: ^assimp.Scene, assimp_material: ^assimp.Material) -> Material {
+read_material_data :: proc(scene: ^assimp.Scene, assimp_material: ^assimp.Material,) -> Material {
 	shininess: f32 = 1.0
 	assimp.GetMaterialFloatArray(
 		assimp_material,
@@ -176,7 +191,7 @@ read_material_data :: proc(scene: ^assimp.Scene, assimp_material: ^assimp.Materi
 	return material
 }
 
-load_textures_from_material :: proc(textures: ^[MAX_TEXTURES_PER_CHANNEL]Texture, scene: ^assimp.Scene, material: ^assimp.Material, type: assimp.TextureType) {
+load_textures_from_material :: proc(textures: ^[MAX_TEXTURES_PER_CHANNEL]int, scene: ^assimp.Scene, material: ^assimp.Material, type: assimp.TextureType) {
 	for i: u32 = 0; i < assimp.GetMaterialTextureCount(material, type); i += 1 {
 		assert(i < 3, "Can't allocate more than 3 texture per channel")
 
@@ -192,18 +207,9 @@ load_textures_from_material :: proc(textures: ^[MAX_TEXTURES_PER_CHANNEL]Texture
 			idx, parse_ok := strconv.parse_i64_of_base(string(cast(cstring)&path.data[1]), 10)
 			assert(parse_ok)
 
-			tex := scene.textures[idx]
-
-			assert(tex.height == 0)
-			texture, texture_load_err := create_texture_from_raw_data(cast([^]u8)tex.data, cast(i32)tex.width, TextureFormat.RGBA)
-			assert(texture_load_err == .None)
-
-			textures[i] = texture
+			textures[i] = cast(int)idx
 		} else {
-			texture, texture_load_err := create_texture_from_path(cast(cstring)&path.data[0])
-			assert(texture_load_err == .None)
-
-			textures[i] = texture
+			assert(false)
 		}
 	}
 }
