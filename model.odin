@@ -183,7 +183,7 @@ read_material_data :: proc(scene: ^assimp.Scene, assimp_material: ^assimp.Materi
 	material.specular  = { }
 	material.shininess = shininess
 
-	shader, ok := create_shader("shaders/test.v", "shaders/test.f")
+	shader, ok := create_shader("shaders/opaque_lit.vert", "shaders/opaque_lit.frag")
 	assert(ok)
 
 	material.shader = shader

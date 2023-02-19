@@ -3,6 +3,7 @@ package main
 import glm "core:math/linalg/glsl"
 
 Camera :: struct {
+	view_matrix: glm.mat4,
 	pv_matrix: glm.mat4,
 
 	position:    glm.vec3,
@@ -19,6 +20,7 @@ Camera :: struct {
 
 create_camera :: proc(position: glm.vec3, fov_y: f32) -> Camera {
 	self := Camera {
+		view_matrix = glm.identity(glm.mat4),
 		pv_matrix   = glm.identity(glm.mat4),
 		position    = position,
 		orientation = glm.quat { },
@@ -48,8 +50,8 @@ camera_calculate_pv_matrix :: proc(self: ^Camera) {
 	self.orientation.y = (ha_c.x * ha_s.y * ha_c.z) + (ha_s.x * ha_c.y * ha_s.z)
 	self.orientation.z = (ha_c.x * ha_c.y * ha_s.z) - (ha_s.x * ha_s.y * ha_c.z)
 
-	transform := glm.mat4Translate(self.position)
-	view      := transform * glm.mat4FromQuat(self.orientation)
+	transform        := glm.mat4Translate(self.position)
+	self.view_matrix  = transform * glm.mat4FromQuat(self.orientation)
 
-	self.pv_matrix = proj * view
+	self.pv_matrix = proj * self.view_matrix
 }

@@ -3,6 +3,8 @@ package main
 import     "core:fmt"
 import glm "core:math/linalg/glsl"
 
+import gl "vendor:OpenGL"
+
 WINDOW_WIDTH  :: 1280
 WINDOW_HEIGHT :: 720
 WINDOW_TITLE  :: "Sköll"
@@ -18,17 +20,21 @@ main :: proc() {
 		return
 	}
 
-	model, model_ok := create_model("./assets/backpack.glb")
+	model, model_ok := create_model("./assets/icosphere.glb")
 	defer destroy_model(&model)
 	if !model_ok {
 		fmt.eprintln("Couldn't create model!")
 		return
 	}
 
+	initialize_default_gizmo_data()
+	defer destroy_default_gizmo_data()
+
+
 	fov: f32 = 90.0
 	cam := create_camera(glm.vec3 { 0, 0, 0 }, fov)
 
-	pos := glm.vec3 { 0.0, 0.0, -15.0 }
+	pos := glm.vec3 { -0.5, -0.5, -3.0 }
 	yaw: f32 = 0.0
 
 	for !window_should_close(&window) {
@@ -40,10 +46,12 @@ main :: proc() {
 		max       := glm.radians_f32(45.0)
 		rotate    := glm.mat4Rotate(glm.normalize(glm.vec3 { -1, 0, -1 }), max * shift)
 		spin      := glm.mat4Rotate(glm.normalize(glm.vec3 { 0, 1, 0 }), yaw)
-		scale     := glm.mat4Scale(glm.vec3 { 0.02, 0.02, 0.02 })
-		transform := translate * rotate * spin * scale
+		scale     := glm.mat4Scale(glm.vec3 { 1.0, 1.0, 1.0 })
+		transform := translate * spin * scale
 
 		draw_model(&model, &cam, &transform)
+
+		draw_transform_gizmo(&cam, pos)
 
 		yaw += 0.005
 
