@@ -3,8 +3,6 @@ package main
 import     "core:fmt"
 import glm "core:math/linalg/glsl"
 
-import gl "vendor:OpenGL"
-
 WINDOW_WIDTH  :: 1280
 WINDOW_HEIGHT :: 720
 WINDOW_TITLE  :: "Sköll"
@@ -51,7 +49,14 @@ main :: proc() {
 
 		draw_model(&model, &cam, &transform)
 
-		draw_transform_gizmo(&cam, pos)
+		batch_data: BatchRendererData
+
+		batch_begin(&batch_data)
+
+		batch_push_screenspace_quad(&batch_data, glm.vec2 { 0.1, 0.7 }, glm.vec2 { 0.2, 0.2 }, { 0.9, 0.7, 0.9 })
+		batch_push_screenspace_quad(&batch_data, glm.vec2 { 0.6, 0.7 }, glm.vec2 { 0.3, 0.2 }, { 0.7, 0.9, 0.9 })
+
+		batch_flush(&batch_data)
 
 		yaw += 0.005
 
