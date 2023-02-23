@@ -35,5 +35,5 @@ void main() {
     vec3 ambient = light_color * u_material.ambient;
     vec3 result = ambient + diffuse + specular;
 
-    out_color = vec4(vec3(0.8), 1.0);
+    out_color = vec4(result, 1.0);
 }
