@@ -1,4 +1,4 @@
-package main
+package gfx
 
 import gl "vendor:OpenGL"
 
@@ -9,57 +9,57 @@ arrow_gizmo_geo: VertexArray
 
 initialize_default_gizmo_data :: proc() {
 	ok: bool
-	gizmo_shader, ok = create_shader("shaders/gizmo.vert", "shaders/gizmo.frag")
-	assert(ok, "Couldn't create gizmo shaders!")
+	gizmo_shader, ok = create_shader( "shaders/gizmo.vert", "shaders/gizmo.frag" )
+	assert( ok, "Couldn't create gizmo shaders!" )
 
 	// Transform
 	{
 		vbuff := create_vertex_buffer()
-		append(&vbuff.vertex_layout, VertexElement { "in_position", ShaderDataType.Float3, 0 })
-		vertex_buffer_set_data(&vbuff, &arrow_verts, len(arrow_verts) * 4)
+		append( &vbuff.vertex_layout, VertexElement { "in_position", ShaderDataType.Float3, 0 } )
+		vertex_buffer_set_data( &vbuff, &arrow_verts, len( arrow_verts ) * 4 )
 
 		ibuff := create_index_buffer()
-		index_buffer_set_data(&ibuff, &arrow_idxs, len(arrow_idxs) * 4)
+		index_buffer_set_data( &ibuff, &arrow_idxs, len( arrow_idxs ) * 4 )
 
-		arrow_gizmo_geo = create_vertex_array(vbuff, ibuff)
+		arrow_gizmo_geo = create_vertex_array( vbuff, ibuff )
 	}
 }
 	
 
 destroy_default_gizmo_data :: proc() {
-	destroy_shader(&gizmo_shader)
-	destroy_vertex_array(&arrow_gizmo_geo)
+	destroy_shader( &gizmo_shader )
+	destroy_vertex_array( &arrow_gizmo_geo )
 }
 
-draw_transform_gizmo :: proc(cam: ^Camera, pos: glm.vec3) {
-	gl.Disable(gl.DEPTH_TEST)
+draw_transform_gizmo :: proc( cam: ^Camera, pos: glm.vec3 ) {
+	gl.Disable( gl.DEPTH_TEST )
 
-	translate := glm.mat4Translate(pos)
+	translate := glm.mat4Translate( pos )
 
-	x_gizmo_transform := translate * glm.mat4Rotate(glm.vec3 { 0, 1, 0 }, 3.14 / 2)
+	x_gizmo_transform := translate * glm.mat4Rotate( glm.vec3 { 0, 1, 0 }, 3.14 / 2 )
 	x_color           := glm.vec3 { 1.0, 0.5, 0.5 }
-	y_gizmo_transform := translate * glm.mat4Rotate(glm.vec3 { 1, 0, 0 }, -3.14 / 2)
+	y_gizmo_transform := translate * glm.mat4Rotate( glm.vec3 { 1, 0, 0 }, -3.14 / 2 )
 	y_color           := glm.vec3 { 0.5, 1.0, 0.5 }
 	z_gizmo_transform := translate
 	z_color           := glm.vec3 { 0.5, 0.5, 1.0 }
 
-	bind(&arrow_gizmo_geo)
-	bind(&arrow_gizmo_geo.index_buffer)
-	shader_set_mat4(&gizmo_shader, "u_pv_matrix", &cam.pv_matrix)
+	bind( &arrow_gizmo_geo )
+	bind( &arrow_gizmo_geo.index_buffer )
+	shader_set_mat4( &gizmo_shader, "u_pv_matrix", &cam.pv_matrix )
 
-	shader_set_mat4(&gizmo_shader, "u_transform_matrix", &x_gizmo_transform)
-	shader_set_vec3(&gizmo_shader, "u_color", &x_color)
-	gl.DrawElements(gl.TRIANGLES, cast(i32)arrow_gizmo_geo.index_buffer.idx_count, gl.UNSIGNED_INT, nil)
+	shader_set_mat4( &gizmo_shader, "u_transform_matrix", &x_gizmo_transform )
+	shader_set_vec3( &gizmo_shader, "u_color", &x_color )
+	gl.DrawElements( gl.TRIANGLES, cast(i32)arrow_gizmo_geo.index_buffer.idx_count, gl.UNSIGNED_INT, nil )
 
-	shader_set_mat4(&gizmo_shader, "u_transform_matrix", &y_gizmo_transform)
-	shader_set_vec3(&gizmo_shader, "u_color", &y_color)
-	gl.DrawElements(gl.TRIANGLES, cast(i32)arrow_gizmo_geo.index_buffer.idx_count, gl.UNSIGNED_INT, nil)
+	shader_set_mat4( &gizmo_shader, "u_transform_matrix", &y_gizmo_transform )
+	shader_set_vec3( &gizmo_shader, "u_color", &y_color )
+	gl.DrawElements( gl.TRIANGLES, cast(i32)arrow_gizmo_geo.index_buffer.idx_count, gl.UNSIGNED_INT, nil )
 
-	shader_set_mat4(&gizmo_shader, "u_transform_matrix", &z_gizmo_transform)
-	shader_set_vec3(&gizmo_shader, "u_color", &z_color)
-	gl.DrawElements(gl.TRIANGLES, cast(i32)arrow_gizmo_geo.index_buffer.idx_count, gl.UNSIGNED_INT, nil)
+	shader_set_mat4( &gizmo_shader, "u_transform_matrix", &z_gizmo_transform )
+	shader_set_vec3( &gizmo_shader, "u_color", &z_color )
+	gl.DrawElements( gl.TRIANGLES, cast(i32)arrow_gizmo_geo.index_buffer.idx_count, gl.UNSIGNED_INT, nil )
 
-	gl.Enable(gl.DEPTH_TEST)
+	gl.Enable( gl.DEPTH_TEST )
 }
 
 // I yoinked these from blender: https://github.com/blender/blender/blob/master/source/blender/editors/gizmo_library/geometry/geom_arrow_gizmo.c

@@ -1,4 +1,4 @@
-package main
+package gfx
 
 import glm "core:math/linalg/glsl"
 
