@@ -1,12 +1,21 @@
 package main
 
+import     "core:fmt"
 import glm "core:math/linalg/glsl"
 
+CameraMode :: enum {
+	FreeCam,
+	Arcball,
+}
+
 Camera :: struct {
+	mode: CameraMode,
+
 	view_matrix: glm.mat4,
 	pv_matrix: glm.mat4,
 
 	position:    glm.vec3,
+	look_at:     glm.vec3,
 	orientation: glm.quat,
 
 	yaw:   f32,
@@ -18,8 +27,9 @@ Camera :: struct {
 	z_far:  f32,
 }
 
-create_camera :: proc(position: glm.vec3, fov_y: f32) -> Camera {
+create_camera :: proc(position: glm.vec3, fov_y: f32, mode: CameraMode) -> Camera {
 	self := Camera {
+		mode        = mode,
 		view_matrix = glm.identity(glm.mat4),
 		pv_matrix   = glm.identity(glm.mat4),
 		position    = position,
@@ -54,4 +64,23 @@ camera_calculate_pv_matrix :: proc(self: ^Camera) {
 	self.view_matrix  = transform * glm.mat4FromQuat(self.orientation)
 
 	self.pv_matrix = proj * self.view_matrix
+}
+
+camera_update :: proc(self: ^Camera, dt: f32) {
+	switch self.mode {
+		case .FreeCam:
+			camera_update_freecam(self, dt)
+		case .Arcball:
+			camera_update_arcball(self, dt)
+	}
+}
+
+camera_update_freecam :: proc(self: ^Camera, dt: f32) {
+	assert(false)
+}
+
+camera_update_arcball :: proc(self: ^Camera, dt: f32) {
+	if input_is_mouse_button_down(MouseButton.ButtonRight) {
+		fmt.println("right is down");
+	}
 }

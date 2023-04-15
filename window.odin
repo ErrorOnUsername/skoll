@@ -1,12 +1,13 @@
 package main
 
 import "core:fmt"
+import "core:os"
 
 import    "vendor:glfw"
 import gl "vendor:OpenGL"
 
 GL_MAJOR_VERSION :: 4
-GL_MINOR_VERSION :: 6
+GL_MINOR_VERSION :: 1
 
 g_current_window: ^Window = nil
 
@@ -30,6 +31,13 @@ create_window :: proc(width: i32, height: i32, title: cstring) -> (Window, Windo
 		fmt.eprintln("glfw_err:")
 		fmt.eprintf("[%d] %s", code, msg);
 		return Window { }, WindowErr.GLFWInitFailed
+	}
+
+	when os.OS == .Darwin {
+		glfw.WindowHint(glfw.CONTEXT_VERSION_MAJOR, GL_MAJOR_VERSION)
+		glfw.WindowHint(glfw.CONTEXT_VERSION_MINOR, GL_MINOR_VERSION)
+		glfw.WindowHint(glfw.OPENGL_FORWARD_COMPAT, 1)
+		glfw.WindowHint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
 	}
 
 	h_wind := glfw.CreateWindow(width, height, title, nil, nil)

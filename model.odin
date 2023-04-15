@@ -16,8 +16,8 @@ Model :: struct {
 create_model :: proc(model_path: cstring) -> (model: Model, ok: bool) {
 	assimp_import_flags :=
 		cast(u32)assimp.PostProcessFlags.Triangulate        |
-		cast(u32)assimp.PostProcessFlags.GenSmoothNormals   |
 		cast(u32)assimp.PostProcessFlags.FixInfacingNormals |
+		cast(u32)assimp.PostProcessFlags.GenSmoothNormals   |
 		cast(u32)assimp.PostProcessFlags.FlipUVs
 
 	scene := assimp.ImportFile(model_path, assimp_import_flags)
